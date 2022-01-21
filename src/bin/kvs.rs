@@ -6,8 +6,9 @@ use std::process;
 /// An implementation of a simple key-value store
 #[derive(Parser, Debug)]
 #[clap(
-    version = "0.1.0",
-    author = "natsunoyoru97 <natsunoyoru97@outlook.com>"
+    version = env!("CARGO_PKG_VERSION"),
+    author = env!("CARGO_PKG_AUTHORS"),
+    about = env!("CARGO_PKG_DESCRIPTION")
 )]
 struct Opts {
     #[clap(subcommand)]
