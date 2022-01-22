@@ -43,9 +43,7 @@ impl Default for KvStore {
 }
 
 impl KvStore {
-    /// Initialize the key-value pair container.
-    /// This struct use Vec as the actual container,
-    /// after initialization, the Vec is empty.
+    /// Initialize the key-value pair HashMap container.
     pub fn new() -> Self {
         KvStore { store: HashMap::new() }
     }
@@ -58,7 +56,7 @@ impl KvStore {
 
     /// Set the value of specified key-value pair.
     /// If the key is in the container, just modify its value;
-    /// Or a new key-value pair will be added to the container.
+    /// Or a new key-value pair will be inserted to the container.
     pub fn set(&mut self, key: String, value: String) -> KvResult<()> {
         let new_pair =(&key, &value);
         match self.store.insert(key.to_owned(), value.to_owned()) {
@@ -88,7 +86,7 @@ impl KvStore {
     }
 
     /// Remove a key-value pair, given a specific key.
-    /// If there is a pair, the function will return Ok(()) the pair was in;
+    /// If there is a pair, the function will return Ok(());
     /// Or the function will throw InvalidKey Error.
     pub fn remove(&mut self, key: String) -> KvResult<()> {
         match self.store.remove_entry(&key) {
