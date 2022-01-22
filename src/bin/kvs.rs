@@ -41,23 +41,31 @@ struct Rm {
 
 fn get(store: KvStore, args: &Get) {
     match store.get(args.key.to_owned()) {
-        Some(_) => eprintln!("unimplemented"),
-        None => eprintln!("unimplemented"),
+        Ok(v) => {
+            match v {
+                Some(_) => eprintln!("unimplemented"),
+                None => eprintln!("unimplemented"),
+            }
+        },
+        Err(e) => eprintln!("{:?}", e),
     }
     process::exit(1);
 }
 
 fn set(mut store: KvStore, args: &Set) {
-    store.set(args.key.to_owned(), args.value.to_owned());
-
-    eprintln!("unimplemented");
-    process::exit(1);
+    match store.set(args.key.to_owned(), args.value.to_owned()) {
+        Ok(_) => process::exit(0),
+        Err(e) => {
+            eprintln!("{:?}", e);
+            process::exit(1);
+        },
+    }
 }
 
 fn rm(mut store: KvStore, args: &Rm) {
     match store.remove(args.key.to_owned()) {
-        Some(_) => eprintln!("unimplemented"),
-        None => eprintln!("unimplemented"),
+        Ok(_) => eprintln!("unimplemented"),
+        Err(e) => eprintln!("{:?}", e),
     }
     process::exit(1);
 }

@@ -1,27 +1,39 @@
 #![deny(missing_docs)]
 //! A simple key-value storage implementation.
 
+use std::{
+    collections::HashMap,
+    fs::File,
+    io,
+    io::prelude::*,
+    path::PathBuf
+};
+use serde::{Deserialize, Serialize};
+
+/// Self-defined key-value errors.
+#[derive(Debug)]
+pub enum KvError {
+    /// The key is invalid.
+    InvalidKey,
+    /// The key cannot be read.
+    KeyReadError,
+    /// The key cannot be written.
+    KeyWriteError,
+}
+
+/// Self-defined key-value result.
+pub type KvResult<T> = Result<T, KvError>;
+
 /// The key-value pair stores in KvStore.
+#[derive(Hash, Eq, PartialEq, Serialize, Deserialize, Debug)]
 struct KvPair {
     _key: String,
     _value: String,
 }
 
-/// Implementation of KvPair
-impl KvPair {
-    pub fn set(&mut self, key: String, value: String) {
-        self._key = key;
-        self._value = value;
-    }
-
-    pub fn get(&self) -> String {
-        self._value.to_owned()
-    }
-}
-
 /// The simple key-value pair container.
 pub struct KvStore {
-    store: Vec<KvPair>,
+    store: HashMap<String, String>,
 }
 
 impl Default for KvStore {
@@ -35,57 +47,53 @@ impl KvStore {
     /// This struct use Vec as the actual container,
     /// after initialization, the Vec is empty.
     pub fn new() -> Self {
-        KvStore { store: Vec::new() }
+        KvStore { store: HashMap::new() }
+    }
+
+    /// Open a key-value store from a specified path.
+    pub fn open(path: impl Into<PathBuf> + std::convert::AsRef<std::path::Path>) -> KvResult<KvStore> {
+        let mut file = File::open(&path);
+        Ok(KvStore::new())
     }
 
     /// Set the value of specified key-value pair.
     /// If the key is in the container, just modify its value;
     /// Or a new key-value pair will be added to the container.
-    pub fn set(&mut self, key: String, value: String) {
-        for kv_pair in self.store.iter_mut() {
-            if kv_pair._key.eq(&key) {
-                (*kv_pair).set(key, value);
-                return;
-            }
+    pub fn set(&mut self, key: String, value: String) -> KvResult<()> {
+        let new_pair =(&key, &value);
+        match self.store.insert(key.to_owned(), value.to_owned()) {
+            Some(v) => {
+                // There is an existing key.
+            },
+            None => {
+                // There is no existing key.
+            },
         }
 
-        self.store.push(KvPair {
-            _key: key,
-            _value: value,
-        });
+        let json = serde_json::to_string(&new_pair).unwrap();
+        println!("{}", json);
+
+        Ok(())
     }
 
     /// Get the value of the key-value pair, given a specific key.
     /// If there is a pair, the function will return an Option that contains the value;
     /// Or the function will return None.
-    pub fn get(&self, key: String) -> Option<String> {
-        for kv_pair in self.store.iter() {
-            if kv_pair._key.eq(&key) {
-                let result = kv_pair.get();
-                return Some(result);
-            }
+    /// It returns an error if the value is not read successfully.
+    pub fn get(&self, key: String) -> KvResult<Option<String>> {
+        match self.store.get(&key) {
+            Some(v) => Ok(Some(v.to_owned())),
+            None => Ok(None),
         }
-
-        None
     }
 
     /// Remove a key-value pair, given a specific key.
-    /// If there is a pair, the function will return the index the pair was in;
-    /// Or the function will return None.
-    pub fn remove(&mut self, key: String) -> Option<usize> {
-        let mut index = self.store.len() + 1;
-        // TODO: Support enumerate through KvStore
-        for i in 0..self.store.len() {
-            if self.store[i]._key.eq(&key) {
-                index = i;
-            }
+    /// If there is a pair, the function will return Ok(()) the pair was in;
+    /// Or the function will throw InvalidKey Error.
+    pub fn remove(&mut self, key: String) -> KvResult<()> {
+        match self.store.remove_entry(&key) {
+            Some(_) => Ok(()),
+            None => Err(KvError::InvalidKey),
         }
-
-        if index < self.store.len() {
-            self.store.remove(index);
-            return Some(index);
-        }
-
-        None
     }
 }
